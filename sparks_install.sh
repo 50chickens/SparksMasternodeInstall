@@ -7,7 +7,7 @@ COIN_DAEMON='Sparksd'
 COIN_CLI='Sparks-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_REPO='https://github.com/SparksReborn/sparkspay.git'
-COIN_TGZ='https://github.com/SparksReborn/sparkspay/releases/download/v0.12.2.5/Sparkscore-0.12.2.5-linux64.tar.gz'
+COIN_TGZ='https://github.com/SparksReborn/sparkspay/releases/download/v0.12.3.1/sparkscore-0.12.3.1-linux64.tar.gz'
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
 SENTINEL_REPO='https://github.com/sparkscrypto/sentinel'
 COIN_NAME='Sparks'
@@ -58,7 +58,7 @@ function download_node() {
   wget -q $COIN_TGZ
   compile_error
   tar xvzf $COIN_ZIP >/dev/null 2>&1
-  cd Sparkscore-0.12.2/bin
+  cd Sparkscore-0.12.3/bin
   chmod +x $COIN_DAEMON $COIN_CLI
   cp $COIN_DAEMON $COIN_CLI $COIN_PATH
   cd ~ >/dev/null 2>&1
