@@ -1,10 +1,10 @@
 #!/bin/bash
 
 TMP_FOLDER=$(mktemp -d)
-CONFIG_FILE='Sparks.conf'
-CONFIGFOLDER='/root/.Sparks'
-COIN_DAEMON='Sparksd'
-COIN_CLI='Sparks-cli'
+CONFIG_FILE='sparks.conf'
+CONFIGFOLDER='/root/.sparkscore'
+COIN_DAEMON='sparksd'
+COIN_CLI='sparks-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_REPO='https://github.com/SparksReborn/sparkspay.git'
 COIN_TGZ='https://github.com/SparksReborn/sparkspay/releases/download/v0.12.3.1/sparkscore-0.12.3.1-linux64.tar.gz'
@@ -28,15 +28,15 @@ MAG='\e[1;35m'
 purgeOldInstallation() {
     echo -e "${GREEN}Searching and removing old $COIN_NAME files and configurations${NC}"
     #kill wallet daemon
-    sudo killall Sparksd > /dev/null 2>&1
+    sudo killall sparksd > /dev/null 2>&1
     #remove old ufw port allow
     sudo ufw delete allow 8890/tcp > /dev/null 2>&1
     #remove old files
     if [ -d "~/.Sparks" ]; then
-        sudo rm -rf ~/.Sparks > /dev/null 2>&1
+        sudo rm -rf ~/.sparks > /dev/null 2>&1
     fi
     #remove binaries and Sparks utilities
-    cd /usr/local/bin && sudo rm Sparks-cli Sparks-tx Sparksd > /dev/null 2>&1 && cd
+    cd /usr/local/bin && sudo rm sparks-cli sparks-tx sparksd > /dev/null 2>&1 && cd
     echo -e "${GREEN}* Done${NONE}";
 }
 
