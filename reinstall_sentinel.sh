@@ -8,7 +8,7 @@ rm $SPARKS_LOC/sentinel.log > /dev/null 2>&1
 
 #apt-get -y install python-virtualenv virtualenv >/dev/null 2>&1
 cd $SPARKS_LOC
-git clone https://github.com/SparksReborn/sentinel /root/.sparkscore/sentinel >/dev/null 2>&1
+git clone https://github.com/SparksReborn/sentinel.git /root/.sparkscore/sentinel >/dev/null 2>&1
 cd $SPARKS_LOC/sentinel
 virtualenv ./venv >/dev/null 2>&1
 ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
