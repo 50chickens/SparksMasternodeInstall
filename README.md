@@ -192,7 +192,7 @@ Click "File Save"
 ***step 4***
 * Check the status of your masternode within the VPS by using the command below:
 
-`Sparks-cli masternode status`
+`sparks-cli masternode status`
 
 *You should see ***status 9***
 
