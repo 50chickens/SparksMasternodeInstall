@@ -191,7 +191,7 @@ function enable_firewall() {
   echo "y" | ufw enable >/dev/null 2>&1
 }
 
-Function enable_fail2ban() {
+function enable_fail2ban() {
 
 echo "installing fail to ban"
 apt -y install fail2ban
