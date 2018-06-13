@@ -159,7 +159,7 @@ function important_information() {
 
 }
 
-function setup_node() {
+#function setup_node() {
   #get_ip
   #create_config
   #create_key
@@ -172,7 +172,7 @@ function setup_node() {
   #important_information
   #configure_systemd
   #created_upgrade
-}
+#}
 
 
 ##### Main #####
