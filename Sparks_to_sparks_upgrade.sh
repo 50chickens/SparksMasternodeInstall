@@ -1,5 +1,11 @@
 #!/bin/bash
 
+## Sparks to sparks Upgrade
+## This upgrade script should be used when migrating from versions 0.12.2.5 or lower
+## This script will migrate your old Sparks config and rename the required files
+##
+##
+
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
 CONFIGFOLDER='/root/.sparkscore'
@@ -38,7 +44,7 @@ purgeOldInstallation() {
     systemctl stop Sparks > /dev/null 2>&1
     sudo killall Sparksd > /dev/null 2>&1
     #remove old ufw port allow
-    #sudo ufw delete allow 8890/tcp > /dev/null 2>&1
+    sudo ufw delete allow 8890/tcp > /dev/null 2>&1
     #remove old files
     if [ -d "/root/.Sparks" ]; then
       #  sudo rm -rf ~/.Sparks > /dev/null 2>&1
@@ -49,6 +55,8 @@ purgeOldInstallation() {
       rm /root/.sparkscore/sentinel.log > /dev/null 2>&1
       rm /root/.sparkscore/debug.log > /dev/null 2>&1
       rm /root/.sparkscore/bootstrap.dat.old > /dev/null 2>&1
+      rm -r /root/.sparkscore/blocks > /dev/null 2>&1
+      rm -r /root/.sparkscore/chainstate> /dev/null 2>&1
     fi
     echo -e "${GREEN} remove binaries and Sparks utilities${NC}"
     cd /usr/local/bin && sudo rm Sparks-cli Sparks-tx Sparksd > /dev/null 2>&1 && cd
@@ -73,17 +81,6 @@ function download_node() {
 
 function install_sentinel() {
   echo -e "${GREEN}Installing sentinel.${NC}"
-#if [ -d "$CONFIGFOLDER/sentinal" ]; then
-#Sentinal repo changed, purge old install
-
-##moved to purge
-
-#rm -r $CONFIGFOLDER/sentinal >/dev/null 2>&1
-#  echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$COIN_NAME.cron
-# crontab $CONFIGFOLDER/$COIN_NAME.cron
-# rm $CONFIGFOLDER/$COIN_NAME.cron >/dev/null 2>&1
-#else
-#fi
   apt-get -y install python-virtualenv virtualenv >/dev/null 2>&1
   git clone $SENTINEL_REPO $CONFIGFOLDER/sentinel >/dev/null 2>&1
   cd $CONFIGFOLDER/sentinel
@@ -113,10 +110,22 @@ network=mainnet
 db_name=database/sentinel.db
 db_driver=sqlite
 
-#DrWeez
-
 EOF
 
+}
+
+function enable_firewall() {
+  echo -e "Installing and setting up firewall to allow ingress on port ${GREEN}$COIN_PORT${NC}"
+  ufw allow $COIN_PORT/tcp comment "$COIN_NAME MN port" >/dev/null
+  ufw allow ssh comment "SSH" >/dev/null 2>&1
+  ufw limit ssh/tcp >/dev/null 2>&1
+  ufw default allow outgoing >/dev/null 2>&1
+  echo "y" | ufw enable >/dev/null 2>&1
+}
+
+function grab_bootstrap() {
+  cd $CONFIGFOLDER
+  wget -q $COIN_BOOTSTRAP
 }
 
 function configure_systemd() {
@@ -160,8 +169,6 @@ EOF
     exit 1
   fi
 }
-
-
 
 function compile_error() {
 if [ "$?" -gt "0" ];
@@ -229,13 +236,11 @@ clear
 }
 
 function enable_fail2ban() {
-
-echo "installing fail 2 ban"
-apt -y install fail2ban >/dev/null 2>&1
-systemctl enable fail2ban >/dev/null 2>&1
-systemctl start fail2ban >/dev/null 2>&1
-echo "Fail2Ban done"
-
+  echo "installing fail 2 ban"
+  apt -y install fail2ban >/dev/null 2>&1
+  systemctl enable fail2ban >/dev/null 2>&1
+  systemctl start fail2ban >/dev/null 2>&1
+  echo "Fail2Ban done"
 }
 
 function important_information() {
@@ -251,12 +256,12 @@ function important_information() {
  echo -e "${BLUE}================================================================================================================================"
  echo -e "${CYAN}Original install script by ${BLUE}Real_Bit_Yoda${CYAN}. Follow twitter to stay updated.  https://twitter.com/Real_Bit_Yoda${NC}"
  echo -e "${BLUE}================================================================================================================================${NC}"
-  echo -e "${CYAN}This upgrade script by ${RED}DrWeez "
+ echo -e "${CYAN}This upgrade script by ${RED}DrWeez "
  echo -e "${BLUE}================================================================================================================================${NC}"
  echo -e "${GREEN}Donations accepted but never required.${NC}"
  echo -e "${BLUE}================================================================================================================================${NC}"
  echo -e "${YELLOW}DrWeez SPK: GTWBJHbZreZaPmNiYvd2HAmQRXxBh3dTTZ"
-  echo -e "${BLUE}================================================================================================================================${NC}"
+ echo -e "${BLUE}================================================================================================================================${NC}"
  echo -e "${YELLOW}Real_Bit_Yoda BCH: qzgnck23pwfag8ucz2f0vf0j5skshtuql5hmwwjhds"
  echo -e "${YELLOW}Real_Bit_Yoda ETH: 0x765eA1753A1eB7b12500499405e811f4d5164554"
  echo -e "${YELLOW}Real_Bit_Yoda LTC: LNt9EQputZK8djTSZyR3jE72o7NXNrb4aB${NC}"
@@ -269,11 +274,11 @@ function setup_node() {
   #create_config
   #create_key
   #update_config
-#  enable_firewall
+  enable_firewall
   enable_fail2ban
   install_sentinel
   configure_sentinel
-#  grab_bootstrap
+  grab_bootstrap
   important_information
   configure_systemd
   #created_upgrade
