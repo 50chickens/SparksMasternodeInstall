@@ -8,7 +8,7 @@
 ## This script is designed to work with a sparks installation done as the root user and the daemon running as a service
 ## https://github.com/SparksReborn/SparksMasternodeInstall
 ## to execute this script use
-## wget -q URL && bash sparks_masternode_upgrade.sh
+## wget -q https://raw.githubusercontent.com/SparksReborn/SparksMasternodeInstall/master/sparks_masternode_upgrade.sh && bash sparks_masternode_upgrade.sh
 
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
@@ -45,9 +45,9 @@ purgeOldInstallation() {
   echo
   echo -e "${GREEN}Stop and remove old ${RED}$COIN_NAME ${GREEN} files${NC}"
   #kill wallet daemon
-  systemctl stop Sparks > /dev/null 2>&1
+  systemctl stop Sparks.service > /dev/null 2>&1
   sudo killall Sparksd > /dev/null 2>&1
-  systemctl stop sparks > /dev/null 2>&1
+  systemctl stop sparks.service > /dev/null 2>&1
   sudo killall sparksd > /dev/null 2>&1
   #remove old files
   echo -e "${GREEN}do quick cleanup${NC}"
@@ -184,5 +184,5 @@ checks # basic checks
 download_node # downloads new version extracts and copies
 setup_node # installs sentinal / reconfigures crontab && removes old service and creats new.
 #start the node again
-systemctl start sparks > /dev/null 2>&1
+systemctl start sparks.service > /dev/null 2>&1
 #finished
