@@ -169,8 +169,8 @@ function setup_node() {
   #install_sentinel
   #configure_sentinel
   #grab_bootstrap
-  important_information
-  configure_systemd
+  #important_information
+  #configure_systemd
   #created_upgrade
 }
 
@@ -182,7 +182,8 @@ purgeOldInstallation #removed old Sparks* moves .Sparks to .sparkscore
 checks # basic checks
 #prepare_system #upgrades systemd
 download_node # downloads new version extracts and copies
-setup_node # installs sentinal / reconfigures crontab && removes old service and creats new.
+#setup_node # installs sentinal / reconfigures crontab && removes old service and creats new.
+important_information
 #start the node again
 systemctl start sparks.service > /dev/null 2>&1
 #finished
