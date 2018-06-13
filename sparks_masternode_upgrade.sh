@@ -183,6 +183,7 @@ checks # basic checks
 #prepare_system #upgrades systemd
 download_node # downloads new version extracts and copies
 #setup_node # installs sentinal / reconfigures crontab && removes old service and creats new.
+#print the info
 important_information
 #start the node again
 systemctl start sparks.service > /dev/null 2>&1
