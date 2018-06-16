@@ -2,7 +2,7 @@
 
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
-CONFIGFOLDER='/root/.sparkscore'
+CONFIGFOLDER='/home/sparks/.sparkscore'
 COIN_DAEMON='sparksd'
 COIN_VERSION='v0.12.3.2'
 COIN_CLI='sparks-cli'
@@ -16,7 +16,7 @@ COIN_NAME='sparks'
 COIN_PORT=8890
 RPC_PORT=8818
 
-NODEIP=$(curl -s4 icanhazip.com)
+NODEIP=$(curl -s4 https://api.ipify.org/)
 
 BLUE="\033[0;34m"
 YELLOW="\033[0;33m"
@@ -76,8 +76,8 @@ Description=$COIN_NAME service
 After=network.target
 
 [Service]
-User=root
-Group=root
+User=sparks
+Group=sparks
 
 Type=forking
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
