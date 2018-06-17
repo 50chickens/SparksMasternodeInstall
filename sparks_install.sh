@@ -2,19 +2,22 @@
 
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
-CONFIGFOLDER='/home/sparks/.sparkscore'
+COIN_USER='sparks'
+COIN_INSTANCE='2'
+CONFIGFOLDER='/home/'$SPARKS_USER'/.sparkscore'$COIN_INSTANCE
 COIN_DAEMON='sparksd'
 COIN_VERSION='v0.12.3.2'
 COIN_CLI='sparks-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_REPO='https://github.com/SparksReborn/sparkspay.git'
-COIN_TGZ='https://github.com/SparksReborn/sparkspay/releases/download/v0.12.3.2/sparkscore-0.12.3.2-linux64.tar.gz'
+COIN_TGZ='https://github.com/SparksReborn/sparkspay/releases/download/'$COIN_VERSION'/sparkscore-0.12.3.2-linux64.tar.gz'
 COIN_BOOTSTRAP='https://github.com/SparksReborn/sparkspay/releases/download/bootstrap/bootstrap.dat'
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
 SENTINEL_REPO='https://github.com/SparksReborn/sentinel.git'
 COIN_NAME='sparks'
-COIN_PORT=8890
-RPC_PORT=8818
+COIN_PORT=8888
+RPC_PORT=8816
+CRONTABFILENAME=$COIN_NAME.$COIN_INSTANCE.cron
 
 NODEIP=$(curl -s4 https://api.ipify.org/)
 
@@ -30,15 +33,15 @@ MAG='\e[1;35m'
 purgeOldInstallation() {
     echo -e "${GREEN}Searching and removing old $COIN_NAME files and configurations${NC}"
     #kill wallet daemon
-    systemctl stop $COIN_NAME.service > /dev/null 2>&1
-    sudo killall $COIN_DAEMON > /dev/null 2>&1
+    systemctl stop $COIN_NAME.$COIN_INSTANCE.service > /dev/null 2>&1
+    #sudo killall $COIN_DAEMON > /dev/null 2>&1
     #remove old ufw port allow
-    sudo ufw delete allow 8890/tcp > /dev/null 2>&1
+    sudo ufw delete allow $COIN_PORT/tcp > /dev/null 2>&1
     #remove old files
-	rm /root/$CONFIGFOLDER/bootstrap.dat.old > /dev/null 2>&1
+	rm ~$COIN_USER/$CONFIGFOLDER/bootstrap.dat.old > /dev/null 2>&1
 	cd /usr/local/bin && sudo rm $COIN_CLI $COIN_DAEMON > /dev/null 2>&1 && cd
     cd /usr/bin && sudo rm $COIN_CLI $COIN_DAEMON > /dev/null 2>&1 && cd
-        sudo rm -rf ~/$CONFIGFOLDER > /dev/null 2>&1
+        sudo rm -rf ~$COIN_USER/$CONFIGFOLDER > /dev/null 2>&1
     #remove binaries and Sparks utilities
     cd /usr/local/bin && sudo rm sparks-cli sparks-tx sparksd > /dev/null 2>&1 && cd
     echo -e "${GREEN}* Done${NONE}";
@@ -51,9 +54,9 @@ function install_sentinel() {
   cd $CONFIGFOLDER/sentinel
   virtualenv ./venv >/dev/null 2>&1
   ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
-  echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$COIN_NAME.cron
-  crontab $CONFIGFOLDER/$COIN_NAME.cron
-  rm $CONFIGFOLDER/$COIN_NAME.cron >/dev/null 2>&1
+  echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$CRONTABFILENAME
+  crontab -u $COIN_USER $CONFIGFOLDER/$CRONTABFILENAME
+  rm $CONFIGFOLDER/$CRONTABFILENAME >/dev/null 2>&1
 }
 
 function download_node() {
@@ -70,14 +73,14 @@ function download_node() {
   clear
 }
 function configure_systemd() {
-  cat << EOF > /etc/systemd/system/$COIN_NAME.service
+  cat << EOF > /etc/systemd/system/$COIN_NAME.$COIN_INSTANCE.service
 [Unit]
 Description=$COIN_NAME service
 After=network.target
 
 [Service]
-User=sparks
-Group=sparks
+User=$COIN_USER
+Group=$COIN_USER
 
 Type=forking
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
@@ -98,13 +101,13 @@ EOF
 
   systemctl daemon-reload
   sleep 3
-  systemctl start $COIN_NAME.service
-  systemctl enable $COIN_NAME.service >/dev/null 2>&1
+  systemctl start $COIN_NAME.$COIN_INSTANCE.service
+  systemctl enable $COIN_NAME.$COIN_INSTANCE.service >/dev/null 2>&1
 
   if [[ -z "$(ps axo cmd:100 | egrep $COIN_DAEMON)" ]]; then
     echo -e "${RED}$COIN_NAME is not running${NC}, please investigate. You should start by running the following commands as root:"
-    echo -e "${GREEN}systemctl start $COIN_NAME.service"
-    echo -e "systemctl status $COIN_NAME.service"
+    echo -e "${GREEN}systemctl start $COIN_NAME.$COIN_INSTANCE.service"
+    echo -e "systemctl status $COIN_NAME.$COIN_INSTANCE.service"
     echo -e "less /var/log/syslog${NC}"
     exit 1
   fi
@@ -305,10 +308,12 @@ function setup_node() {
 
 ##### Main #####
 clear
-
-purgeOldInstallation
-checks
-prepare_system
-download_node
-setup_node
+echo "Configuring for "$COIN_USER
+cd ~$COIN_USER
+echo "Current folder" `pwd`
+#purgeOldInstallation
+#checks
+#prepare_system
+#download_node
+#setup_node
 
