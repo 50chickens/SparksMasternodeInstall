@@ -223,6 +223,13 @@ if [[ $(lsb_release -d) != *16.04* ]]; then
   exit 1
 fi
 
+if getent passwd $COIN_USER > /dev/null 2>&1; then 
+	echo $COIN_USER " exists."
+else
+	echo $COIN_USER " doesn't exist."
+	exit 1
+fi 
+
 if [[ $EUID -ne 0 ]]; then
    echo -e "${RED}$0 must be run as root.${NC}"
    exit 1
