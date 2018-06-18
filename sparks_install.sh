@@ -52,6 +52,20 @@ function install_sentinel() {
   apt-get -y install python-virtualenv virtualenv >/dev/null 2>&1
   git clone $SENTINEL_REPO $CONFIGFOLDER/sentinel >/dev/null 2>&1
   cd $CONFIGFOLDER/sentinel
+  cat << EOF > $CONFIGFOLDER/sentinel/sentinel.conf
+# specify path to sparks.conf or leave blank
+# default is the same as SparksCore
+sparks_conf=$CONFIGFOLDER/sparks.conf
+
+# valid options are mainnet, testnet (default=mainnet)
+network=mainnet
+#network=testnet
+
+# database connection details
+db_name=database/sentinel.db
+db_driver=sqlite
+
+EOF
   virtualenv ./venv >/dev/null 2>&1
   ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
   echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$CRONTABFILENAME
@@ -113,9 +127,20 @@ EOF
   fi
 }
 
+function make_folder()
 
+{
+	mkdir $CONFIGFOLDER >/dev/null 2>&1
+}
+
+function set_permissions()
+{
+chown -R $COIN_USER. $CONFIGFOLDER
+chmod 700 $CONFIGFOLDER
+
+}
 function create_config() {
-  mkdir $CONFIGFOLDER >/dev/null 2>&1
+  
   RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
   RPCPASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w22 | head -n1)
   cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
@@ -139,7 +164,7 @@ function create_key() {
   echo -e "${YELLOW}Enter your ${RED}$COIN_NAME Masternode GEN Key${NC}."
   read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
-  $COIN_PATH$COIN_DAEMON -daemon
+  $COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
   sleep 30
   if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
@@ -224,9 +249,9 @@ if [[ $(lsb_release -d) != *16.04* ]]; then
 fi
 
 if getent passwd $COIN_USER > /dev/null 2>&1; then 
-	echo $COIN_USER " exists."
+	echo "good. " $COIN_USER " user exists."
 else
-	echo $COIN_USER " doesn't exist."
+	echo $COIN_USER " doesn't exist. You need to create it"
 	exit 1
 fi 
 
@@ -277,11 +302,11 @@ function important_information() {
  echo -e "${PURPLE}Windows Wallet Guide. https://github.com/Sparks/master/README.md${NC}"
  echo -e "${BLUE}================================================================================================================================${NC}"
  echo -e "${GREEN}$COIN_NAME Masternode is up and running listening on port${NC}${PURPLE}$COIN_PORT${NC}."
- echo -e "${GREEN}Configuration file is:${NC}${RED}$CONFIGFOLDER/$CONFIG_FILE${NC}"
- echo -e "${GREEN}Start:${NC}${RED}systemctl start $COIN_NAME.service${NC}"
- echo -e "${GREEN}Stop:${NC}${RED}systemctl stop $COIN_NAME.service${NC}"
- echo -e "${GREEN}VPS_IP:PORT${NC}${GREEN}$NODEIP:$COIN_PORT${NC}"
- echo -e "${GREEN}MASTERNODE GENKEY is:${NC}${PURPLE}$COINKEY${NC}"
+ echo -e "${GREEN}Configuration file is: ${NC}${RED}$CONFIGFOLDER/$CONFIG_FILE${NC}"
+ echo -e "${GREEN}Start: ${NC}${RED}systemctl start $COIN_NAME.$COIN_INSTANCE.service${NC}"
+ echo -e "${GREEN}Stop: ${NC}${RED}systemctl stop $COIN_NAME.$COIN_INSTANCE.service${NC}"
+ echo -e "${GREEN}VPS_IP: PORT${NC}${GREEN}$NODEIP:$COIN_PORT${NC}"
+ echo -e "${GREEN}MASTERNODE GENKEY is: ${NC}${PURPLE}$COINKEY${NC}"
  if [[ -n $SENTINEL_REPO  ]]; then
  echo -e "${RED}Sentinel${NC} is installed in ${RED}/"$CONFIGFOLDER"/sentinel_$COIN_NAME${NC}"
  echo -e "Sentinel logs is: ${RED}$CONFIGFOLDER/sentinel.log${NC}"
@@ -303,6 +328,8 @@ function important_information() {
 
 function setup_node() {
   get_ip
+  make_folder
+  set_permissions
   create_config
   create_key
   update_config
@@ -311,6 +338,8 @@ function setup_node() {
   install_sentinel
   important_information
   configure_systemd
+  set_permissions
+  
 }
 
 
