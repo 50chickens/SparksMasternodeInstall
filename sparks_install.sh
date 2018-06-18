@@ -315,6 +315,6 @@ echo "Current folder" `pwd`
 #purgeOldInstallation
 checks
 #prepare_system
-#download_node
+download_node
 setup_node
 
