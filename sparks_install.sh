@@ -187,7 +187,7 @@ function get_ip() {
   declare -a NODE_IPS
   for ips in $(netstat -i | awk '!/Kernel|Iface|lo/ {print $1," "}')
   do
-    NODE_IPS+=($(curl --interface $ips --connect-timeout 2 -s4 icanhazip.com))
+    NODE_IPS+=($(curl --interface $ips --connect-timeout 2 -s4 https://api.ipify.org/))
   done
 
   if [ ${#NODE_IPS[@]} -gt 1 ]
@@ -204,6 +204,7 @@ function get_ip() {
   else
     NODEIP=${NODE_IPS[0]}
   fi
+  echo "Using " $NODEIP
 }
 
 
@@ -235,7 +236,7 @@ fi
 
 function prepare_system() {
 echo -e "Preparing the VPS to setup. ${CYAN}$COIN_NAME${NC} ${RED}Masternode${NC}"
-apt-get update >/dev/null 2>&1
+apt-get update  > /dev/null 2>&1
 DEBIAN_FRONTEND=noninteractive apt-get update > /dev/null 2>&1
 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y -qq upgrade >/dev/null 2>&1
 apt install -y software-properties-common >/dev/null 2>&1
@@ -309,11 +310,11 @@ function setup_node() {
 ##### Main #####
 clear
 echo "Configuring for "$COIN_USER
-cd ~$COIN_USER
+#cd ~$COIN_USER
 echo "Current folder" `pwd`
 #purgeOldInstallation
-#checks
+checks
 #prepare_system
 #download_node
-#setup_node
+setup_node
 
