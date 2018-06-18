@@ -1,5 +1,6 @@
 #!/bin/bash
 
+umask 0700
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
 COIN_USER='sparks'
@@ -48,7 +49,7 @@ purgeOldInstallation() {
 }
 
 function install_sentinel() {
-  echo -e "${GREEN}Installing sentinel.${NC}"
+  echo -e "${GREEN}Installing sentinel.${N
   apt-get -y install python-virtualenv virtualenv >/dev/null 2>&1
   git clone $SENTINEL_REPO $CONFIGFOLDER/sentinel >/dev/null 2>&1
   cd $CONFIGFOLDER/sentinel
