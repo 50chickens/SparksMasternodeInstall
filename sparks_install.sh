@@ -54,9 +54,8 @@ purgeOldInstallation() {
 function install_sentinel() {
   echo -e "${GREEN}Installing sentinel.${NC}"
   sudo apt-get -y install python-virtualenv virtualenv >/dev/null 2>&1
-  git clone $SENTINEL_REPO $CONFIGFOLDER/sentinel >/dev/null 2>&1
-  cd $CONFIGFOLDER/sentinel
-  cat << EOF > $CONFIGFOLDER/sentinel/sentinel.conf
+  sudo -u $COIN_USER --set-home git clone $SENTINEL_REPO $CONFIGFOLDER/sentinel >/dev/null 2>&1
+  echo "
 # specify path to sparks.conf or leave blank
 # default is the same as SparksCore
 sparks_conf=$CONFIGFOLDER/sparks.conf
@@ -69,13 +68,13 @@ network=mainnet
 db_name=database/sentinel.db
 db_driver=sqlite
 
-EOF
+" | sudo -u $COIN_USER tee $CONFIGFOLDER/sentinel/sentinel.conf > /dev/null
 
-  virtualenv ./venv >/dev/null 2>&1
-  ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
-  echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$CRONTABFILENAME
-  sudo crontab -u $COIN_USER $CONFIGFOLDER/$CRONTABFILENAME
-  rm $CONFIGFOLDER/$CRONTABFILENAME >/dev/null 2>&1
+  sudo -u $COIN_USER virtualenv ./venv >/dev/null 2>&1
+  sudo -u $COIN_USER ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
+  echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" | sudo -u $COIN_USER tee $CONFIGFOLDER/$CRONTABFILENAME > /dev/null
+  sudo -u $COIN_USER crontab $CONFIGFOLDER/$CRONTABFILENAME
+  sudo -u $COIN_USER rm $CONFIGFOLDER/$CRONTABFILENAME >/dev/null 2>&1
 
 }
 
@@ -86,7 +85,8 @@ function download_node() {
   compile_error
   tar xvzf $COIN_ZIP >/dev/null 2>&1
   cd sparkscore-0.12.3/bin
-  chmod +x $COIN_DAEMON $COIN_CLI
+  chmod 0755 $COIN_DAEMON $COIN_CLI
+  chown root. $COIN_DAEMON $COIN_CLI
   sudo cp $COIN_DAEMON $COIN_CLI $COIN_PATH
   cd ~ >/dev/null 2>&1
   rm -rf $TMP_FOLDER >/dev/null 2>&1
@@ -94,8 +94,7 @@ function download_node() {
 }
 function configure_systemd() {
 
-cat << EOF > $CONFIGFOLDER/$SYSTEMDNAME
-  
+echo " 
 [Unit]
 Description=$COIN_NAME service
 After=network.target
@@ -119,14 +118,14 @@ StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target
-EOF
+" | sudo -u $COIN_USER tee $CONFIGFOLDER/$SYSTEMDNAME > /dev/null
 
   sudo cp $CONFIGFOLDER/$SYSTEMDNAME $SYSTEMDFILENAME
-  rm $CONFIGFOLDER/$SYSTEMDNAME >/dev/null 2>&1
-  systemctl daemon-reload
+  sudo rm $CONFIGFOLDER/$SYSTEMDNAME >/dev/null 2>&1
+  sudo systemctl daemon-reload
   sleep 3
-  systemctl start $SYSTEMDNAME
-  systemctl enable $SYSTEMDNAME >/dev/null 2>&1
+  sudo systemctl start $SYSTEMDNAME
+  sudo systemctl enable $SYSTEMDNAME >/dev/null 2>&1
 
   if [[ -z "$(ps axo cmd:100 | egrep $COIN_DAEMON)" ]]; then
     echo -e "${RED}$COIN_NAME is not running${NC}, please investigate. You should start by running the following commands as root:"
@@ -140,28 +139,14 @@ EOF
 function make_folder()
 
 {
-	mkdir $CONFIGFOLDER >/dev/null 2>&1
+	sudo -u $COIN_USER mkdir $CONFIGFOLDER >/dev/null 2>&1
 }
-
-function set_owner()
-{
-chown -R $COIN_USER. $CONFIGFOLDER
-
-}
-
-
-function set_permissions()
-{
-chown -R $COIN_USER. $CONFIGFOLDER
-chmod 700 $CONFIGFOLDER
-
-}
-
 
 function create_config() {
   RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
   RPCPASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w22 | head -n1)
-  cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
+  #sudo -u $COIN_USER cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
+echo "
 rpcuser=$RPCUSER
 rpcpassword=$RPCPASSWORD
 rpcport=$RPC_PORT
@@ -170,39 +155,40 @@ listen=1
 server=1
 daemon=1
 port=$COIN_PORT
-EOF
+" | sudo -u $COIN_USER tee $CONFIGFOLDER/$CONFIG_FILE > /dev/null
 }
 
 function grab_bootstrap() {
 cd $CONFIGFOLDER
-  wget -q $COIN_BOOTSTRAP
+  sudo -u $COIN_USER wget -q $COIN_BOOTSTRAP
 }
 
 function create_key() {
   echo -e "${YELLOW}Enter your ${RED}$COIN_NAME Masternode GEN Key${NC}."
   read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
-  $COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
+  sudo -u $COIN_USER $COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
   sleep 30
   if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
    exit 1
   fi
-  COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
+  COINKEY=$($COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER genkey)
   if [ "$?" -gt "0" ];
     then
     echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the GEN Key${NC}"
     sleep 30
-    COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
+    COINKEY=$($COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER masternode genkey)
   fi
-  $COIN_PATH$COIN_CLI stop
+  sudo -u $COIN_USER $COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
 fi
 clear
 }
 
 function update_config() {
-  sed -i 's/daemon=1/daemon=0/' $CONFIGFOLDER/$CONFIG_FILE
-  cat << EOF >> $CONFIGFOLDER/$CONFIG_FILE
+  sudo -u $COIN_USER sed -i 's/daemon=1/daemon=0/' $CONFIGFOLDER/$CONFIG_FILE
+  #sudo -u $COIN_USER cat << EOF >> $CONFIGFOLDER/$CONFIG_FILE
+echo "
 logintimestamps=1
 maxconnections=256
 #bind=$NODEIP
@@ -212,7 +198,7 @@ masternodeprivkey=$COINKEY
 
 #ADDNODES
 
-EOF
+" | sudo -u $COIN_USER tee $CONFIGFOLDER/$CONFIG_FILE > /dev/null
 }
 
 
@@ -220,11 +206,11 @@ function enable_firewall() {
   echo -e "Installing and setting up firewall to allow ingress on port ${GREEN}$COIN_PORT${NC}"
   echo -e "Installing and setting up firewall to allow ingress on port ${GREEN}$RPC_PORT${NC}"
 
-  ufw allow $COIN_PORT/tcp comment "$COIN_NAME MN port" >/dev/null
-  ufw allow $RPC_PORT/tcp comment "$COIN_NAME rpc port" >/dev/null
-  ufw allow ssh comment "SSH" >/dev/null 2>&1
-  ufw limit ssh/tcp >/dev/null 2>&1
-  ufw default allow outgoing >/dev/null 2>&1
+  sudo ufw allow $COIN_PORT/tcp comment "$COIN_NAME MN port" >/dev/null
+  sudo ufw allow $RPC_PORT/tcp comment "$COIN_NAME rpc port" >/dev/null
+  sudo ufw allow ssh comment "SSH" >/dev/null 2>&1
+  sudo ufw limit ssh/tcp >/dev/null 2>&1
+  sudo ufw default allow outgoing >/dev/null 2>&1
   echo "y" | ufw enable >/dev/null 2>&1
 }
 
@@ -354,8 +340,6 @@ function important_information() {
 function setup_node() {
   get_ip
   make_folder
-  set_owner
-  set_permissions
   create_config
   create_key
   update_config
@@ -364,7 +348,7 @@ function setup_node() {
   install_sentinel
   important_information
   configure_systemd
-  set_owner
+
 }
 
 
@@ -376,6 +360,7 @@ echo "Current folder" `pwd`
 #purgeOldInstallation
 checks
 #prepare_system
+
 download_node
 setup_node
 
