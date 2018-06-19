@@ -1,6 +1,6 @@
 #!/bin/bash
-
 umask 0700
+
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
 COIN_USER='sparks'
@@ -49,7 +49,7 @@ purgeOldInstallation() {
 }
 
 function install_sentinel() {
-  echo -e "${GREEN}Installing sentinel.${N
+  echo -e "${GREEN}Installing sentinel.${NC}"
   apt-get -y install python-virtualenv virtualenv >/dev/null 2>&1
   git clone $SENTINEL_REPO $CONFIGFOLDER/sentinel >/dev/null 2>&1
   cd $CONFIGFOLDER/sentinel
@@ -67,6 +67,7 @@ db_name=database/sentinel.db
 db_driver=sqlite
 
 EOF
+
   virtualenv ./venv >/dev/null 2>&1
   ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
   echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$CRONTABFILENAME
@@ -140,8 +141,8 @@ chown -R $COIN_USER. $CONFIGFOLDER
 chmod 700 $CONFIGFOLDER
 
 }
+
 function create_config() {
-  
   RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
   RPCPASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w22 | head -n1)
   cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
@@ -165,7 +166,7 @@ function create_key() {
   echo -e "${YELLOW}Enter your ${RED}$COIN_NAME Masternode GEN Key${NC}."
   read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
-  $COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
+  $COIN_PATH$COIN_DAEMON -daemon
   sleep 30
   if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
@@ -250,9 +251,9 @@ if [[ $(lsb_release -d) != *16.04* ]]; then
 fi
 
 if getent passwd $COIN_USER > /dev/null 2>&1; then 
-	echo "good. " $COIN_USER " user exists."
+	echo $COIN_USER " exists."
 else
-	echo $COIN_USER " doesn't exist. You need to create it"
+	echo $COIN_USER " doesn't exist."
 	exit 1
 fi 
 
@@ -309,6 +310,7 @@ function important_information() {
  echo -e "${GREEN}VPS_IP: PORT${NC}${GREEN}$NODEIP:$COIN_PORT${NC}"
  echo -e "${GREEN}MASTERNODE GENKEY is: ${NC}${PURPLE}$COINKEY${NC}"
  if [[ -n $SENTINEL_REPO  ]]; then
+
  echo -e "${RED}Sentinel${NC} is installed in ${RED}/"$CONFIGFOLDER"/sentinel_$COIN_NAME${NC}"
  echo -e "Sentinel logs is: ${RED}$CONFIGFOLDER/sentinel.log${NC}"
  fi
@@ -339,8 +341,6 @@ function setup_node() {
   install_sentinel
   important_information
   configure_systemd
-  set_permissions
-  
 }
 
 
