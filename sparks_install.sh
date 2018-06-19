@@ -159,7 +159,7 @@ port=$COIN_PORT
 }
 
 function grab_bootstrap() {
-cd $CONFIGFOLDER
+
   sudo -u $COIN_USER wget -q $COIN_BOOTSTRAP
 }
 
@@ -198,7 +198,7 @@ masternodeprivkey=$COINKEY
 
 #ADDNODES
 
-" | sudo -u $COIN_USER tee $CONFIGFOLDER/$CONFIG_FILE > /dev/null
+" | sudo -u $COIN_USER tee -a $CONFIGFOLDER/$CONFIG_FILE > /dev/null
 }
 
 
