@@ -211,7 +211,10 @@ EOF
 
 function enable_firewall() {
   echo -e "Installing and setting up firewall to allow ingress on port ${GREEN}$COIN_PORT${NC}"
+  echo -e "Installing and setting up firewall to allow ingress on port ${GREEN}$RPC_PORT${NC}"
+
   ufw allow $COIN_PORT/tcp comment "$COIN_NAME MN port" >/dev/null
+  ufw allow $RPC_PORT/tcp comment "$COIN_NAME rpc port" >/dev/null
   ufw allow ssh comment "SSH" >/dev/null 2>&1
   ufw limit ssh/tcp >/dev/null 2>&1
   ufw default allow outgoing >/dev/null 2>&1
@@ -251,6 +254,7 @@ if [ "$?" -gt "0" ];
   exit 1
 fi
 }
+
 
 
 function checks() {
