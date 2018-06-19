@@ -251,9 +251,9 @@ if [[ $(lsb_release -d) != *16.04* ]]; then
 fi
 
 if getent passwd $COIN_USER > /dev/null 2>&1; then 
-	echo $COIN_USER " exists."
+	echo "Good. " $COIN_USER " user exists."
 else
-	echo $COIN_USER " doesn't exist."
+	echo $COIN_USER " user doesn't exist. please go and create it."
 	exit 1
 fi 
 
@@ -310,7 +310,6 @@ function important_information() {
  echo -e "${GREEN}VPS_IP: PORT${NC}${GREEN}$NODEIP:$COIN_PORT${NC}"
  echo -e "${GREEN}MASTERNODE GENKEY is: ${NC}${PURPLE}$COINKEY${NC}"
  if [[ -n $SENTINEL_REPO  ]]; then
-
  echo -e "${RED}Sentinel${NC} is installed in ${RED}/"$CONFIGFOLDER"/sentinel_$COIN_NAME${NC}"
  echo -e "Sentinel logs is: ${RED}$CONFIGFOLDER/sentinel.log${NC}"
  fi
