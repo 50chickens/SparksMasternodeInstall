@@ -173,7 +173,7 @@ function create_key() {
    echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
    exit 1
   fi
-  COINKEY=$(sudo -u $COIN_USER $COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER genkey)
+  COINKEY=$(sudo -u $COIN_USER $COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER masternode genkey)
   if [ "$?" -gt "0" ];
     then
     echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the GEN Key${NC}"
