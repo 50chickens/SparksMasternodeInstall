@@ -1,5 +1,5 @@
 #!/bin/bash
-umask 0700
+umask 0077
 
 TMP_FOLDER=$(mktemp -d)
 CONFIG_FILE='sparks.conf'
@@ -73,6 +73,7 @@ EOF
   echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" > $CONFIGFOLDER/$CRONTABFILENAME
   crontab -u $COIN_USER $CONFIGFOLDER/$CRONTABFILENAME
   rm $CONFIGFOLDER/$CRONTABFILENAME >/dev/null 2>&1
+
 }
 
 function download_node() {
@@ -135,12 +136,20 @@ function make_folder()
 	mkdir $CONFIGFOLDER >/dev/null 2>&1
 }
 
+function set_owner()
+{
+chown -R $COIN_USER. $CONFIGFOLDER
+
+}
+
+
 function set_permissions()
 {
 chown -R $COIN_USER. $CONFIGFOLDER
 chmod 700 $CONFIGFOLDER
 
 }
+
 
 function create_config() {
   RPCUSER=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w10 | head -n1)
@@ -331,6 +340,7 @@ function important_information() {
 function setup_node() {
   get_ip
   make_folder
+  set_owner
   set_permissions
   create_config
   create_key
@@ -340,6 +350,7 @@ function setup_node() {
   install_sentinel
   important_information
   configure_systemd
+  set_owner
 }
 
 
