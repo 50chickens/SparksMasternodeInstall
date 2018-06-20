@@ -341,6 +341,7 @@ function setup_node() {
   get_ip
   make_folder
   create_config
+  grab_bootstrap
   create_key
   update_config
   enable_firewall
