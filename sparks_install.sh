@@ -160,7 +160,7 @@ port=$COIN_PORT
 
 function grab_bootstrap() {
 
-  sudo -u $COIN_USER wget -q $COIN_BOOTSTRAP
+  sudo -u $COIN_USER wget -q $COIN_BOOTSTRAP --output-file=$CONFIGFOLDER/bootstrap.dat
 }
 
 function create_key() {
