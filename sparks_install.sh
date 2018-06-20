@@ -70,8 +70,8 @@ db_driver=sqlite
 
 " | sudo -u $COIN_USER tee $CONFIGFOLDER/sentinel/sentinel.conf > /dev/null
 
-  sudo -u $COIN_USER virtualenv ./venv >/dev/null 2>&1
-  sudo -u $COIN_USER ./venv/bin/pip install -r requirements.txt >/dev/null 2>&1
+  sudo -u $COIN_USER -H virtualenv $CONFIGFOLDER/sentinel/venv >/dev/null 2>&1
+  sudo -u $COIN_USER -H $CONFIGFOLDER/sentinel/venv/bin/pip install -r $CONFIGFOLDER/sentinel/requirements.txt >/dev/null 2>&1
   echo  "* * * * * cd $CONFIGFOLDER/sentinel && ./venv/bin/python bin/sentinel.py >> $CONFIGFOLDER/sentinel.log 2>&1" | sudo -u $COIN_USER tee $CONFIGFOLDER/$CRONTABFILENAME > /dev/null
   sudo -u $COIN_USER crontab $CONFIGFOLDER/$CRONTABFILENAME
   sudo -u $COIN_USER rm $CONFIGFOLDER/$CRONTABFILENAME >/dev/null 2>&1
